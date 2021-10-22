@@ -1,17 +1,28 @@
-  
+/*
+#include <stdio.h>
+#include <stdlib.h>
+#define PARSE_TIMEOUT 1000
+
+#include "Stream.h"
+//#include <iostream.h>
+//#include <strstream.h>
+// se crea una clase para usar la funcion parseFloat de la biblioteca StrStream
+
+*/
+
+
 static void smartdelay(unsigned long ms);
 //const char* sol_pc_sen = "add";
 
-const int I_sonic = 2, I_joystick = 3, pinNoMagnetometro = null;
+const int I_sonic = 2, I_joystick = 3, pinNoMagnetometro = 15;
 
 const int EN1 = 7, RPWM1 = 6, LPWM1 = 5;
 
 const int EN2 = 9, RPWM2 = 10, LPWM2 = 9;
-int pwm = 130, pwm1, pwm2;
+int pwm = 130, pwm1, pwm2 ;
 
-// pines del joystick
-const int Pinx = A1; 
-const int Piny = A0; 
+
+//const int Piny = A0, Pinx = A1; 
 float Valuex, valorMayorX = -2, valorMenorX = 2; 
 float Valuey, valorMayorY = -2, valorMenorY = 2;
 
@@ -36,8 +47,8 @@ float angulo; // la variable angulo contiene el sentido de la silla
 
 //configuracion del modo autonomo
 
-char dato; // Esta es la variable que lee el puerto I2C una vez el maestro envia un dato
-float consigna;
+ // Esta es la variable que lee el puerto I2C una vez el maestro envia un dato
+double consigna;
 //fin del modo autonomo
 
 
@@ -150,8 +161,8 @@ void joystick(){
   
 
 void leer(){
-  Valuex = analogRead(Pinx);
-  Valuey = analogRead(Piny);
+  Valuex = analogRead(A1);
+  Valuey = analogRead(A0);
    
   Valuex = (Valuex)*(5)/1024 -2.5;
   Valuey = (Valuey)*(5)/1024 -2.5;
@@ -223,42 +234,50 @@ float medirMagnetometro(){
   }
 }
 
-void autonomo(){
-  while(1 < Wire.available()){ dato = Wire.read(); /* receive byte as a character */ /*Serial.print(c);  print the character*/}
-  char comando = getValue(dato, ' ', 0);
-  if( comando == S){
-    // posicionar la silla en angulo
-    consigna = getValue(dato, ' ', 1);
-    //se debe de ingresar dentro de una ciclo while o do-while
-    
-    float error = error();
-    if(error < dir()){
-      // giro por derecha
-      
-      }
-    if(error >= dir()){
-      //giro por Izquierda
-      }
+void autonomo(int howMany){
+  String dato = "";           // como la variable dato se inicializa con un caracter nulo es importante verificar que este 
+  while(Wire.available()){    // caracter no me genere inconvenientes mas adelante. si  genera el inconveniente, inicializa
+    char c = Wire.read();     // la variable con cualquier valor, y en los " dato.substring() " de los if, quedarian de la
+    dato.concat(c);           // siguiente forma if( dato.substring(1,2) == '#'){  pass  }, tambien tienes que incrementar el
+    }                         // substring() de los if que se usan para los angulos
+    dato.concat('\0');
 
+  if(dato.substring(0,1) == "S"){         //Este comando hace que la silla Gire hacia la derecha o hacia la izquierda
+    PayFr(EN1, RPWM1,LPWM1);              //Es necesario que al realizar el giro lo primero que realice la silla
+    PayFr(EN2, RPWM2,LPWM2);              // es un frenado por seguridad
+    String angulo = dato.substring(1);
+    float errorAngulo = angulo.toFloat();
     
+    if(errorAngulo > 0){                  /* NOTA: Esto se debe de realizar en un ciclo While */
+      //giro por derecha
+      }
+    if(errorAngulo < 0){
+      //Giro por la Izquierda
+      }else{
+        PayFr(EN1, RPWM1,LPWM1);
+        PayFr(EN2, RPWM2,LPWM2);
+        }
     }
-  if (comando == A){
-    //pone en movimiento la silla haci adelante
+    
+  if(dato.substring(0,1) == "A"){         //Este comando hace que la silla vaya hacia delante
+    pwm = 130;
+    RoAde(pwm,EN1,RPWM1,LPWM1);
+    RoAde(pwm,EN2,RPWM2,LPWM2);
     }
-
-  if(comando == D){
-    // detiene la silla
+  if(dato.substring(0,1) == "D"){         // Este comando hace que la silla se detenga
+    PayFr(EN1, RPWM1,LPWM1);
+    PayFr(EN2, RPWM2,LPWM2);
     }
 }
 
-float error(){
-  float erro = consigna - medirMagnetometro();
+double errorr(){
+  double erro = consigna - medirMagnetometro();
   return abs(erro);
   
   }
 
-float dir(){
-  float anReal = medirMagnetometro;
+double dir(){
+  double anReal = medirMagnetometro();
   if (anReal >= 180){
     anReal -= PI;
     }else{
@@ -267,8 +286,7 @@ float dir(){
     return anReal;
   }
 
-String getValue(String data, char separator, int index)//Esta funcion es un .split()
-{
+String getValue(String data, char separator, int index){
   int found = 0;
   int strIndex[] = {0, -1};
   int maxIndex = data.length()-1;
