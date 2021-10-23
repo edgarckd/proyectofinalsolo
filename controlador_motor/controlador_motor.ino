@@ -2,7 +2,7 @@
 static void smartdelay(unsigned long ms);
 //const char* sol_pc_sen = "add";
 
-const int I_sonic = 2, I_joystick = 3;
+const int I_sonic = 2, I_joystick = 3, pinNoMagnetometro = null;
 
 const int EN1 = 7, RPWM1 = 6, LPWM1 = 5;
 
@@ -15,12 +15,40 @@ const int Piny = A0;
 float Valuex, valorMayorX = -2, valorMenorX = 2; 
 float Valuey, valorMayorY = -2, valorMenorY = 2;
 
+                /* **************************************** */
+
+// configuracion para el magnetometro
+
+#include <Arduino.h>
+#include <Wire.h>
+// libraries
+#include "bmm150.h"
+#include "bmm150_defs.h"
+
+BMM150 bmm = BMM150();
+bmm150_mag_data value_offset;
+
+float angulo; // la variable angulo contiene el sentido de la silla 
+
+// Fin configuracion Magnetometro
+
+                  /* **************************************** */
+
+//configuracion del modo autonomo
+
+char dato; // Esta es la variable que lee el puerto I2C una vez el maestro envia un dato
+float consigna;
+//fin del modo autonomo
+
+
+
 void setup() {
   //Serial.begin(115200);
   //pines de interrupciones
-  
+  Wire.begin(0x10);
+  Wire.onReceive(autonomo);
   pinMode(13, OUTPUT);
-
+  pinMode(pinNoMagnetometro, OUTPUT);
   //pines de canal A
   pinMode(RPWM1, OUTPUT);
   pinMode(LPWM1, OUTPUT);
@@ -163,3 +191,95 @@ void calibracion(){
     valorMenorY = valorMenorY - 0.1;
     
   }
+
+float medirMagnetometro(){
+  if(bmm.initialize() == BMM150_E_ID_NOT_CONFORM){
+    Serial.println("Chip ID can not read!");
+    digitalWrite(pinNoMagnetometro,HIGH);
+    smartdelay(1);
+    digitalWrite(pinNoMagnetometro, LOW);
+    //return ; aquí retorno el angulo que me pidan para que la silla no se mueva y no se me genere error
+  } 
+  else {
+    bmm150_mag_data value;
+    bmm.read_mag_data();
+  
+    value.x = bmm.raw_mag_data.raw_datax - value_offset.x;
+    value.y = bmm.raw_mag_data.raw_datay - value_offset.y;
+    value.z = bmm.raw_mag_data.raw_dataz - value_offset.z;
+  
+    float xyHeading = atan2(value.x, value.y);
+    float zxHeading = atan2(value.z, value.x);
+    float heading = xyHeading;
+  
+    if(heading < 0)
+      heading += 2*PI;
+    if(heading > 2*PI)
+      heading -= 2*PI;
+    angulo = heading * 180/M_PI; 
+    float xyHeadingDegrees = xyHeading * 180 / M_PI;
+    float zxHeadingDegrees = zxHeading * 180 / M_PI;
+    return angulo;
+  }
+}
+
+void autonomo(){
+  while(1 < Wire.available()){ dato = Wire.read(); /* receive byte as a character */ /*Serial.print(c);  print the character*/}
+  char comando = getValue(dato, ' ', 0);
+  if( comando == S){
+    // posicionar la silla en angulo
+    consigna = getValue(dato, ' ', 1);
+    //se debe de ingresar dentro de una ciclo while o do-while
+    
+    float error = error();
+    if(error < dir()){
+      // giro por derecha
+      
+      }
+    if(error >= dir()){
+      //giro por Izquierda
+      }
+
+    
+    }
+  if (comando == A){
+    //pone en movimiento la silla haci adelante
+    }
+
+  if(comando == D){
+    // detiene la silla
+    }
+}
+
+float error(){
+  float erro = consigna - medirMagnetometro();
+  return abs(erro);
+  
+  }
+
+float dir(){
+  float anReal = medirMagnetometro;
+  if (anReal >= 180){
+    anReal -= PI;
+    }else{
+    anReal += PI;  
+      }
+    return anReal;
+  }
+
+String getValue(String data, char separator, int index)//Esta funcion es un .split()
+{
+  int found = 0;
+  int strIndex[] = {0, -1};
+  int maxIndex = data.length()-1;
+
+  for(int i=0; i<=maxIndex && found<=index; i++){
+    if(data.charAt(i)==separator || i==maxIndex){
+        found++;
+        strIndex[0] = strIndex[1]+1;
+        strIndex[1] = (i == maxIndex) ? i+1 : i;
+    }
+  }
+
+  return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
+}

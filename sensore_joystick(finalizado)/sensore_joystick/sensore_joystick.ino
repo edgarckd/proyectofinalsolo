@@ -5,7 +5,7 @@ int trig1=6, eco1=7, trig2=8, eco2=9, inteco=12, intjoystick=13 ;
 double medida1, medida2=500;
 unsigned long previousMillis =0;
 long duration, distanceCm;
-boolean js, sn;
+boolean js, sn,  sn1, sn2;
 //fin variables para ultrasonido
 
 //variables para la funcion calibración
@@ -36,7 +36,11 @@ void setup() {
 }
 
 void loop() {
-  sonic(trig2, eco2);
+  sonic(trig2, eco2, 2);
+  
+  sonic(trig1, eco1, 1);
+  
+  if(sn1 == true || sn2 == true){ sn = true;}else{sn = false;}
   joystick();
   if(js == false && sn == false){digitalWrite(intjoystick, HIGH);  digitalWrite(inteco, LOW);}
   if(js == false && sn == true){digitalWrite(intjoystick, LOW);  digitalWrite(inteco, HIGH);}
@@ -46,7 +50,7 @@ void loop() {
   
 }
 
-long sonic(int TRIG, int ECO){
+long sonic(int TRIG, int ECO, int son){
   
   digitalWrite(TRIG, LOW);  //para generar un pulso limpio ponemos a LOW 4us
   delayMicroseconds(4);
@@ -57,11 +61,23 @@ long sonic(int TRIG, int ECO){
   duration = pulseIn(ECO, HIGH,23400);  //medimos el tiempo entre pulsos, en microsegundos
   distanceCm = duration * 10 / 292/ 2;   //convertimos a distancia, en cm
   if(distanceCm == 0){distanceCm = 400;}
-  //Serial.println(distanceCm);
+  /*Serial.print(son);
+  Serial.print(" :  ");
+  Serial.println(distanceCm);*/
   if(distanceCm <= 150){
-    sn = true;
+    if(son == 1){
+      sn1= true;
+      }
+    if(son == 2){
+      sn2 = true;
+      }
     }else{
-      sn = false;
+      if(son == 1){
+      sn1= false;
+      }
+    if(son == 2){
+      sn2 = false;
+      }
       }
 }
 
