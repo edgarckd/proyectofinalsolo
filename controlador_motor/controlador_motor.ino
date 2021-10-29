@@ -1,32 +1,3 @@
-/*
-#include <stdio.h>
-#include <stdlib.h>
-#define PARSE_TIMEOUT 1000
-
-#include "Stream.h"
-//#include <iostream.h>
-//#include <strstream.h>
-// se crea una clase para usar la funcion parseFloat de la biblioteca StrStream
-
-*/
-
-
-static void smartdelay(unsigned long ms);
-//const char* sol_pc_sen = "add";
-
-const int I_sonic = 2, I_joystick = 3, pinNoMagnetometro = 15;
-
-const int EN1 = 7, RPWM1 = 6, LPWM1 = 5;
-
-const int EN2 = 9, RPWM2 = 10, LPWM2 = 9;
-int pwm = 130, pwm1, pwm2 ;
-
-
-//const int Piny = A0, Pinx = A1; 
-float Valuex, valorMayorX = -2, valorMenorX = 2; 
-float Valuey, valorMayorY = -2, valorMenorY = 2;
-
-                /* **************************************** */
 
 // configuracion para el magnetometro
 
@@ -42,6 +13,27 @@ bmm150_mag_data value_offset;
 float angulo; // la variable angulo contiene el sentido de la silla 
 
 // Fin configuracion Magnetometro
+
+
+
+static void smartdelay(unsigned long ms);
+//const char* sol_pc_sen = "add";
+
+const int I_sonic = 2, I_joystick = 3, pinNoMagnetometro = 15;
+
+const int EN1 = 7, RPWM1 = 6, LPWM1 = 5;
+
+const int EN2 = 9, RPWM2 = 10, LPWM2 = 9;
+int pwm = 130, pwm1, pwm2 ;
+
+
+const int Piny = A0, Pinx = A1; 
+float Valuex, valorMayorX = -2, valorMenorX = 2; 
+float Valuey, valorMayorY = -2, valorMenorY = 2;
+
+                /* **************************************** */
+
+
 
                   /* **************************************** */
 
@@ -142,13 +134,13 @@ void joystick(){
       //giro derecha
       pwm = (255/(valorMayorX - 2.5))*(Valuex) - (255*2.5)/(valorMayorX - 2.5);
       RoRev(pwm, EN1,RPWM1,LPWM1);
-      RoAde(pwm, EN1, RPWM1,LPWM1);
+      RoAde(pwm, EN2, RPWM2,LPWM2);
       }
     if(Valuex < valorMenorX && (Valuey >= valorMenorY || Valuey <= valorMayorY)){
       //giro izquierda
       pwm = (255/(valorMenorX + 2.5))*(Valuex) + (255*2.5)/(valorMenorX + 2.5);
-      RoRev(pwm, EN2,RPWM2,LPWM2);
-      RoAde(pwm, EN2, RPWM2,LPWM2);
+      RoRev(pwm, EN2, RPWM2,LPWM2);
+      RoAde(pwm, EN1, RPWM1,LPWM1);
       }else{
         PayFr(EN1,RPWM1,LPWM1);
         PayFr(EN2,RPWM2,LPWM2);
@@ -161,8 +153,8 @@ void joystick(){
   
 
 void leer(){
-  Valuex = analogRead(A1);
-  Valuey = analogRead(A0);
+  Valuex = analogRead(Pinx);
+  Valuey = analogRead(Piny);
    
   Valuex = (Valuex)*(5)/1024 -2.5;
   Valuey = (Valuey)*(5)/1024 -2.5;
@@ -203,36 +195,6 @@ void calibracion(){
     
   }
 
-float medirMagnetometro(){
-  if(bmm.initialize() == BMM150_E_ID_NOT_CONFORM){
-    Serial.println("Chip ID can not read!");
-    digitalWrite(pinNoMagnetometro,HIGH);
-    smartdelay(1);
-    digitalWrite(pinNoMagnetometro, LOW);
-    //return ; aquí retorno el angulo que me pidan para que la silla no se mueva y no se me genere error
-  } 
-  else {
-    bmm150_mag_data value;
-    bmm.read_mag_data();
-  
-    value.x = bmm.raw_mag_data.raw_datax - value_offset.x;
-    value.y = bmm.raw_mag_data.raw_datay - value_offset.y;
-    value.z = bmm.raw_mag_data.raw_dataz - value_offset.z;
-  
-    float xyHeading = atan2(value.x, value.y);
-    float zxHeading = atan2(value.z, value.x);
-    float heading = xyHeading;
-  
-    if(heading < 0)
-      heading += 2*PI;
-    if(heading > 2*PI)
-      heading -= 2*PI;
-    angulo = heading * 180/M_PI; 
-    float xyHeadingDegrees = xyHeading * 180 / M_PI;
-    float zxHeadingDegrees = zxHeading * 180 / M_PI;
-    return angulo;
-  }
-}
 
 void autonomo(int howMany){
   String dato = "";           // como la variable dato se inicializa con un caracter nulo es importante verificar que este 
@@ -242,21 +204,16 @@ void autonomo(int howMany){
     }                         // substring() de los if que se usan para los angulos
     dato.concat('\0');
 
-  if(dato.substring(0,1) == "S"){         //Este comando hace que la silla Gire hacia la derecha o hacia la izquierda
-    PayFr(EN1, RPWM1,LPWM1);              //Es necesario que al realizar el giro lo primero que realice la silla
-    PayFr(EN2, RPWM2,LPWM2);              // es un frenado por seguridad
-    String angulo = dato.substring(1);
-    float errorAngulo = angulo.toFloat();
-    
-    if(errorAngulo > 0){                  /* NOTA: Esto se debe de realizar en un ciclo While */
-      //giro por derecha
-      }
-    if(errorAngulo < 0){
-      //Giro por la Izquierda
-      }else{
-        PayFr(EN1, RPWM1,LPWM1);
-        PayFr(EN2, RPWM2,LPWM2);
-        }
+  if(dato.substring(0,1) == "B"){         //Este comando hace que la silla Gire hacia la derecha
+    pwm = 90;
+    RoRev(pwm, EN1, RPWM1,LPWM1);
+    RoAde(pwm, EN2, RPWM2,LPWM2);
+    }
+
+  if(dato.substring(0,1) == "P"){         //Este comando hace que la silla Gire hacia la izquierda
+    pwm = 90;
+    RoRev(pwm, EN2, RPWM2,LPWM2);
+    RoAde(pwm, EN1, RPWM1,LPWM1);
     }
     
   if(dato.substring(0,1) == "A"){         //Este comando hace que la silla vaya hacia delante
@@ -264,40 +221,8 @@ void autonomo(int howMany){
     RoAde(pwm,EN1,RPWM1,LPWM1);
     RoAde(pwm,EN2,RPWM2,LPWM2);
     }
-  if(dato.substring(0,1) == "D"){         // Este comando hace que la silla se detenga
+  if(dato.substring(0,1) == "S"){         // Este comando hace que la silla se detenga
     PayFr(EN1, RPWM1,LPWM1);
     PayFr(EN2, RPWM2,LPWM2);
     }
-}
-
-double errorr(){
-  double erro = consigna - medirMagnetometro();
-  return abs(erro);
-  
-  }
-
-double dir(){
-  double anReal = medirMagnetometro();
-  if (anReal >= 180){
-    anReal -= PI;
-    }else{
-    anReal += PI;  
-      }
-    return anReal;
-  }
-
-String getValue(String data, char separator, int index){
-  int found = 0;
-  int strIndex[] = {0, -1};
-  int maxIndex = data.length()-1;
-
-  for(int i=0; i<=maxIndex && found<=index; i++){
-    if(data.charAt(i)==separator || i==maxIndex){
-        found++;
-        strIndex[0] = strIndex[1]+1;
-        strIndex[1] = (i == maxIndex) ? i+1 : i;
-    }
-  }
-
-  return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
