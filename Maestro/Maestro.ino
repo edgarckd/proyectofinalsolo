@@ -19,6 +19,7 @@ char dato;
 void setup() {
   Serial.begin(115200);
   ss.begin(38400);
+  Wire.begin();
   if(bmm.initialize() == BMM150_E_ID_NOT_CONFORM){
     while(1);
   } 
