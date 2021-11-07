@@ -28,7 +28,8 @@ class Conexion:
         self._toleranciaAngulo = toleranciaAngulo
         self.rutaActiva = rutaActiva
         self.statusProcess = False
-        self.finishRoute = False                
+        self.finishRoute = False 
+        self.bufferSalida = b'M'               
     def puntoInicio(self):
         self.errorDistancia = Calculos.distancia(self.puntoObjetivo, self.bufferGPS)
         if self.errorDistancia <= self._toleranciaDistancia :

@@ -1,6 +1,9 @@
 
+from sys import _int_info
 import serial as s
 import time
+from socket import socket, AF_INET, SOCK_DGRAM
+
 class Silla:
     silla = s
 
@@ -30,7 +33,26 @@ class Silla:
     def detener(self):
         return b'S'
 
+class aRed:
+    direccionIP         = str
+    puertoWeb           = int
+    socket              = socket
+    def __init__(self, direccionIP = 'localhost', puertoWeb = 37778) -> None:
+        self.direccionIP    = direccionIP
+        self.puertoWeb      = puertoWeb
+        self.socket         = socket(AF_INET, SOCK_DGRAM)
+    def enviarWeb(self, mensaje):
+        """Falta corregir el envio a socket. El mensaje son las coordenadas en la version del txt
+        como mensaje es una lista en float, se debe acomodar el mensaje de tal forma que se pueda enviar"""
+        if type(mensaje)!= bytes : mensaje = str(mensaje).encode('utf-8')
+        self.socket.sendto(mensaje,('localhost', self.puertoWeb))
+        self.socket.recvfrom(8192)
+        self.socket.sendto(mensaje,(self.direccionIP, self.puertoWeb))
+        self.socket.recvfrom(8192)
 
 if __name__=='__main__':
     p = Silla()
     print(p.giro(-75.89))
+
+
+
