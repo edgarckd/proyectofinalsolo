@@ -20,7 +20,6 @@ class Conexion:
     def __init__(self,toleranciaDistancia=2.0 ,toleranciaAngulo = 10,rutaActiva = False,puntoObjetivo = 1) -> None:
         #self._puntosPorRuta = puntoPorRuta
         self.puntoObjetivo = puntoObjetivo
-        #self.bufferBrujula = bufferBrujula
         #self.bufferBrujula  = bufferBrujula
         #self.errorDistancia = errorDistancia
         self._toleranciaDistancia = toleranciaAngulo
@@ -29,16 +28,17 @@ class Conexion:
         self.rutaActiva = rutaActiva
         self.statusProcess = False
         self.finishRoute = False 
-        self.bufferSalida = b'M'               
+        self.bufferSalida = b'M'
+        self.bufferGPS = [11.020060,-74.851002]              
     def puntoInicio(self):
-        self.errorDistancia = Calculos.distancia(self.puntoObjetivo, self.bufferGPS)
+        self.errorDistancia = Calculos.distancia(self.corrdenadaObjetivo, self.bufferGPS)
         if self.errorDistancia <= self._toleranciaDistancia :
             return True
         else:
             return False
     
     def anguloAObjetivo(self):
-        angulo = Calculos.anguloNorte2Puntos(self.bufferGPS, self.puntoObjetivo)
+        angulo = Calculos.anguloNorte2Puntos(self.bufferGPS, self.corrdenadaObjetivo)
         self.errorAngulo = angulo - self.bufferBrujula
         if (self.errorAngulo < 0):
             if abs(self.errorAngulo) > 180 :
