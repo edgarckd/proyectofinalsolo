@@ -4,13 +4,8 @@
 #include <Arduino.h>
 #include <Wire.h>
 // libraries
-#include "bmm150.h"
-#include "bmm150_defs.h"
 
-BMM150 bmm = BMM150();
-bmm150_mag_data value_offset;
 
-float angulo; // la variable angulo contiene el sentido de la silla 
 
 // Fin configuracion Magnetometro
 
@@ -19,12 +14,12 @@ float angulo; // la variable angulo contiene el sentido de la silla
 static void smartdelay(unsigned long ms);
 //const char* sol_pc_sen = "add";
 
-const int I_sonic = 2, I_joystick = 3, pinNoMagnetometro = 15;
+const int I_sonic = 2, I_joystick = 3;
 
 const int EN1 = 7, RPWM1 = 6, LPWM1 = 5;
 
-const int EN2 = 9, RPWM2 = 10, LPWM2 = 9;
-int pwm = 130, pwm1, pwm2 ;
+const int EN2 = 8, RPWM2 = 10, LPWM2 = 9;
+int pwm=130 , pwm1, pwm2 ;
 
 
 const int Piny = A0, Pinx = A1; 
@@ -37,11 +32,7 @@ float Valuey, valorMayorY = -2, valorMenorY = 2;
 
                   /* **************************************** */
 
-//configuracion del modo autonomo
 
- // Esta es la variable que lee el puerto I2C una vez el maestro envia un dato
-double consigna;
-//fin del modo autonomo
 
 
 
@@ -49,9 +40,9 @@ void setup() {
   //Serial.begin(115200);
   //pines de interrupciones
   Wire.begin(0x10);
-  Wire.onReceive(autonomo);
+  //Wire.onReceive(autonomo);
   pinMode(13, OUTPUT);
-  pinMode(pinNoMagnetometro, OUTPUT);
+ 
   //pines de canal A
   pinMode(RPWM1, OUTPUT);
   pinMode(LPWM1, OUTPUT);
@@ -133,14 +124,14 @@ void joystick(){
     if(Valuex > valorMayorX && (Valuey >= valorMenorY || Valuey <= valorMayorY)){
       //giro derecha
       pwm = (255/(valorMayorX - 2.5))*(Valuex) - (255*2.5)/(valorMayorX - 2.5);
-      RoRev(pwm, EN1,RPWM1,LPWM1);
-      RoAde(pwm, EN2, RPWM2,LPWM2);
+      PasFr(/*pwm,*/ EN2,RPWM2,LPWM2);
+      RoAde(pwm, EN1, RPWM1,LPWM1);
       }
     if(Valuex < valorMenorX && (Valuey >= valorMenorY || Valuey <= valorMayorY)){
       //giro izquierda
       pwm = (255/(valorMenorX + 2.5))*(Valuex) + (255*2.5)/(valorMenorX + 2.5);
-      RoRev(pwm, EN2, RPWM2,LPWM2);
-      RoAde(pwm, EN1, RPWM1,LPWM1);
+      PasFr(/*pwm,*/ EN1, RPWM1,LPWM1);
+      RoAde(pwm, EN2, RPWM2,LPWM2);
       }else{
         PayFr(EN1,RPWM1,LPWM1);
         PayFr(EN2,RPWM2,LPWM2);

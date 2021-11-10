@@ -60,6 +60,7 @@ def data(mensaje):
     p.enviarWeb(mensaje)
     time.sleep(1.5)
     threading.Thread(target=data,args=([345.45,34.566],)).start()
+
 if __name__=='__main__':
     time.sleep(4)
     threading.Thread(target=data,args=([345.45,34.566],)).start()    

@@ -27,7 +27,8 @@ def SiguientePunto():
     Conexion.posicionObjetivo()
     Conexion.anguloAObjetivo()
     Conexion.distanciaAObjetivo()
-
+def acomodador():
+    Conexion.bufferSalida = Silla.giro(Conexion.errorAngulo())
 def verificador():
     pass
 
@@ -42,6 +43,6 @@ if __name__ == '__main__':
     """ ¿Estoy en el punto de inicio?"""
     while Conexion.puntoInicio == False:
         print(f'Por favor acerquese al punto de inicio de la ruta')
-    
+        time.sleep(3)
     """Ir a la Ruta siguiente"""
-      
+           
