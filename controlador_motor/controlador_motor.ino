@@ -25,7 +25,7 @@ int pwm=130 , pwm1, pwm2 ;
 const int Piny = A0, Pinx = A1; 
 float Valuex, valorMayorX = -2, valorMenorX = 2; 
 float Valuey, valorMayorY = -2, valorMenorY = 2;
-
+char buffer = "M";
                 /* **************************************** */
 
 
@@ -37,10 +37,10 @@ float Valuey, valorMayorY = -2, valorMenorY = 2;
 
 
 void setup() {
-  //Serial.begin(115200);
+  Serial.begin(115200);
   //pines de interrupciones
   Wire.begin(0x10);
-  //Wire.onReceive(autonomo);
+  Wire.onReceive(automo);
   pinMode(13, OUTPUT);
  
   //pines de canal A
@@ -61,8 +61,32 @@ void setup() {
 }
 
 void loop() {
-  PayFr(EN1, RPWM1,LPWM1);
-  PayFr(EN2, RPWM2,LPWM2);
+delay(10);
+
+  
+  if(buffer == 'A'){
+    int wm = 90;
+    RoAde(wm,EN1,RPWM1,LPWM1);
+    RoAde(wm,EN2,RPWM2,LPWM2);
+    }
+  if(buffer == 'S'){
+    PayFr(EN1,RPWM1,LPWM1);
+    PayFr(EN2,RPWM2,LPWM2);
+    }
+  if(buffer == 'B'){
+      pwm = 90;
+      RoRev(pwm, EN1, RPWM1,LPWM1);
+      RoAde(pwm, EN2, RPWM2,LPWM2);
+            
+      }
+  if(buffer == 'P'){         //Este comando hace que la silla Gire hacia la izquierda
+      pwm = 90;
+      RoRev(pwm, EN2, RPWM2,LPWM2);
+      RoAde(pwm, EN1, RPWM1,LPWM1);
+    }else{
+      PasFr(EN1,RPWM1,LPWM1);
+      PasFr(EN2,RPWM2,LPWM2);
+    }
 }
 
 void RoAde(int pwm, int EN,int RPWM, int LPWM) {
@@ -99,8 +123,6 @@ void joystick(){
   y este pueda ser leido por el controlador del moto
   */
   delay(10);
-  //smartdelay(500);
-    
   if(digitalRead(I_sonic) == HIGH){
     //frenar silla sin parar
     freno_ultrasonic();
@@ -109,35 +131,45 @@ void joystick(){
   if(digitalRead(I_sonic) == LOW){
     // activar joystick
     leer();
-    if(Valuey < valorMenorY && (Valuex<=valorMayorX || Valuex >= valorMenorX)){
+    
+
+    if(Valuey < valorMenorY && (Valuex<=valorMayorX && Valuex >= valorMenorX)){
       //silla adelante
-      pwm = (255 * Valuey)/(valorMenorY + 2.5) + (255*2.5)/(valorMenorY + 2.5);
+      pwm = ((255 * Valuey)/(valorMenorY + 2.5)) + ((255*2.5)/(valorMenorY + 2.5));
+      Serial.println(pwm);
       RoAde(pwm,EN1,RPWM1,LPWM1);
       RoAde(pwm,EN2,RPWM2,LPWM2);
-      }
-    if(Valuey > valorMayorY && (Valuex<=valorMayorX || Valuex >= valorMenorX)){
+      }else{
+    if(Valuey > valorMayorY && (Valuex<=valorMayorX && Valuex >= valorMenorX)){
       //silla atras
       pwm = (255 * Valuey)/(valorMayorY - 2.5) - (255*2.5)/(valorMayorY - 2.5);
+      Serial.println(pwm);
       RoRev(pwm,EN1,RPWM1,LPWM1);
       RoRev(pwm,EN2,RPWM2,LPWM2);
-      }
-    if(Valuex > valorMayorX && (Valuey >= valorMenorY || Valuey <= valorMayorY)){
+      }else{
+        if(Valuex > valorMayorX && (Valuey >= valorMenorY && Valuey <= valorMayorY)){
       //giro derecha
       pwm = (255/(valorMayorX - 2.5))*(Valuex) - (255*2.5)/(valorMayorX - 2.5);
-      PasFr(/*pwm,*/ EN2,RPWM2,LPWM2);
+      Serial.println(pwm);
+      PayFr(/*pwm,*/ EN2,RPWM2,LPWM2);
       RoAde(pwm, EN1, RPWM1,LPWM1);
-      }
-    if(Valuex < valorMenorX && (Valuey >= valorMenorY || Valuey <= valorMayorY)){
+      }else{
+        if(Valuex < valorMenorX && (Valuey >= valorMenorY && Valuey <= valorMayorY)){
       //giro izquierda
       pwm = (255/(valorMenorX + 2.5))*(Valuex) + (255*2.5)/(valorMenorX + 2.5);
-      PasFr(/*pwm,*/ EN1, RPWM1,LPWM1);
+      Serial.println(pwm);
+      PayFr(/*pwm,*/ EN1, RPWM1,LPWM1);
       RoAde(pwm, EN2, RPWM2,LPWM2);
       }else{
-        PayFr(EN1,RPWM1,LPWM1);
-        PayFr(EN2,RPWM2,LPWM2);
+        PasFr(EN1,RPWM1,LPWM1);
+        PasFr(EN2,RPWM2,LPWM2);
+        }}
         }
+    
+    
       
     }
+  }
     
 
   }
@@ -186,8 +218,20 @@ void calibracion(){
     
   }
 
+void automo(int howMany){
+  /*String dato = "";           // como la variable dato se inicializa con un caracter nulo es importante verificar que este 
+  while(Wire.available()){    // caracter no me genere inconvenientes mas adelante. si  genera el inconveniente, inicializa
+    char c = Wire.read();
+    dato.concat(c);           // siguiente forma if( dato.substring(1,2) == '#'){  pass  }, tambien tienes que incrementar el
+    }                         // substring() de los if que se usan para los angulos
+    dato.concat('\0');*/
+    buffer = Wire.read();
+  }
 
-void autonomo(int howMany){
+
+
+/*
+void aut(int howMany){
   String dato = "";           // como la variable dato se inicializa con un caracter nulo es importante verificar que este 
   while(Wire.available()){    // caracter no me genere inconvenientes mas adelante. si  genera el inconveniente, inicializa
     char c = Wire.read();     // la variable con cualquier valor, y en los " dato.substring() " de los if, quedarian de la
@@ -216,4 +260,4 @@ void autonomo(int howMany){
     PayFr(EN1, RPWM1,LPWM1);
     PayFr(EN2, RPWM2,LPWM2);
     }
-}
+}*/

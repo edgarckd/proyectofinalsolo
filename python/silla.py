@@ -1,29 +1,36 @@
-import serial as s
+import serial 
 import time
 from socket import socket, AF_INET, SOCK_DGRAM
 import threading
 
-from serial.serialutil import Timeout 
 
 class Silla:
-    silla = s
+    #silla = s
 
-    def __init__(self, puerto= '/dev/ttyACM0', baudios = 115200) -> None:
+    def __init__(self, puerto='/dev/ttyACM0', baudios = 115200) -> None:
+        
         try:
-            self.silla = s.Serial(puerto,baudios,timeout=1)
+            self.silla = serial.Serial(puerto,baudios, timeout=3)
+            time.sleep(2)
         except:
             print("no se pudo generar la conexión")
             #exit()
     
-    def escribirRecibir(self, bufferSalida, timeout=30):
-        if type(bufferSalida)!= bytes : bufferSalida = str(bufferSalida).encode('utf-8')      
+    def escribirRecibir(self, bufferSalida, time_out=3):
+        if type(bufferSalida)!= bytes : bufferSalida = str(bufferSalida).encode()
+        #print(bufferSalida)      
         self.silla.write(bufferSalida)
-        ll = ' '
-        inicio = time.time()
-        while self.silla.in_waiting() == 0 & (time.time()-inicio) < timeout:
-            time.sleep(0.01)
-        while (self.silla.in_waiting()!=0):
-            ll = ll + self.silla.readline().decode('ascii').strip()
+        
+        #inicio = time.time()
+        #print(self.silla.in_waiting())
+        """while self.silla.in_waiting() & (time.time()-inicio) < timeout :
+            print("pruuu")
+            time.sleep(0.01)"""
+        #while (self.silla.in_waiting()):
+        
+        ll = self.silla.readline().decode('ascii').strip()
+        an = ll
+        
         return  ll
     
     def giro(self, errorAngulo):
@@ -62,7 +69,7 @@ def data(mensaje):
     threading.Thread(target=data,args=([345.45,34.566],)).start()
 
 if __name__=='__main__':
-    time.sleep(4)
-    threading.Thread(target=data,args=([345.45,34.566],)).start()    
+    con = Silla()
+    print(con.escribirRecibir("M"))
 
 

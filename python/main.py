@@ -41,8 +41,8 @@ if __name__ == '__main__':
     threading.Thread(target=buffers).start()
     
     """ ¿Estoy en el punto de inicio?"""
-    while Conexion.puntoInicio == False:
+    """while Conexion.puntoInicio == False:
         print(f'Por favor acerquese al punto de inicio de la ruta')
-        time.sleep(3)
+        time.sleep(3)"""
     """Ir a la Ruta siguiente"""
            
